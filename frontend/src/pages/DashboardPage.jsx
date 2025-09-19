@@ -1,16 +1,32 @@
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import apiClient from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
-
-const taskData = [
-  { name: 'Todo', value: 10 },
-  { name: 'In Progress', value: 15 },
-  { name: 'Done', value: 13 },
-];
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [stats, setStats] = useState({ total_projects: 0, tasks_in_progress: 0, completed_tasks: 0, tasks_by_status: [] });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const response = await apiClient.get('/dashboard/stats');
+      setStats(response.data);
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+    setLoading(false);
+  };
+
+  if (loading) {
+    return <div>Loading dashboard...</div>;
+  }
 
   return (
     <div>
@@ -20,15 +36,15 @@ export default function DashboardPage() {
       <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         <div className="p-6 bg-white rounded-lg shadow-md">
           <h3 className="text-lg font-medium text-gray-900">Total Projects</h3>
-          <p className="mt-2 text-3xl font-bold text-gray-900">5</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">{stats.total_projects}</p>
         </div>
         <div className="p-6 bg-white rounded-lg shadow-md">
           <h3 className="text-lg font-medium text-gray-900">Tasks In Progress</h3>
-          <p className="mt-2 text-3xl font-bold text-gray-900">15</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">{stats.tasks_in_progress}</p>
         </div>
         <div className="p-6 bg-white rounded-lg shadow-md">
           <h3 className="text-lg font-medium text-gray-900">Completed Tasks</h3>
-          <p className="mt-2 text-3xl font-bold text-gray-900">13</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">{stats.completed_tasks}</p>
         </div>
       </div>
 
@@ -38,7 +54,7 @@ export default function DashboardPage() {
           <div className="mt-4">
             <PieChart width={400} height={300}>
               <Pie
-                data={taskData}
+                data={stats.tasks_by_status}
                 cx={200}
                 cy={150}
                 labelLine={false}
@@ -46,7 +62,7 @@ export default function DashboardPage() {
                 fill="#8884d8"
                 dataKey="value"
               >
-                {taskData.map((entry, index) => (
+                {stats.tasks_by_status.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
@@ -61,7 +77,7 @@ export default function DashboardPage() {
             <BarChart
               width={500}
               height={300}
-              data={taskData}
+              data={stats.tasks_by_status}
               margin={{
                 top: 5, right: 30, left: 20, bottom: 5,
               }}

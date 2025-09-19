@@ -15,7 +15,13 @@ export default function ProjectsPage() {
   const fetchProjects = async () => {
     try {
       const response = await apiClient.get('/projects');
-      setProjects(response.data);
+      // Ensure that we always set an array to the projects state
+      if (Array.isArray(response.data)) {
+        setProjects(response.data);
+      } else {
+        console.error('API did not return an array for projects:', response.data);
+        setProjects([]); // Set to an empty array to prevent map function error
+      }
     } catch (error) {
       console.error('Failed to fetch projects:', error);
     }

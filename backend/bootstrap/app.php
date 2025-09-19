@@ -19,9 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
 
         $middleware->validateCsrfTokens(except: [
+            'api/*',
             'sanctum/csrf-cookie',
-            'login',
-            'register',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

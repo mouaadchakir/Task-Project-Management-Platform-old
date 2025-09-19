@@ -6,6 +6,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('USER')) || null);
   const [token, setToken] = useState(localStorage.getItem('TOKEN') || null);
+  const [errors, setErrors] = useState(null);
 
   const login = async (email, password) => {
     await apiClient.get('/sanctum/csrf-cookie', { baseURL: 'http://127.0.0.1:8000' });
@@ -18,13 +19,22 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (name, email, password, password_confirmation) => {
-    await apiClient.get('/sanctum/csrf-cookie', { baseURL: 'http://127.0.0.1:8000' });
-    const response = await apiClient.post('/register', { name, email, password, password_confirmation });
-    const { access_token, user } = response.data;
-    setUser(user);
-    setToken(access_token);
-    localStorage.setItem('USER', JSON.stringify(user));
-    localStorage.setItem('TOKEN', access_token);
+    setErrors(null);
+    try {
+      await apiClient.get('/sanctum/csrf-cookie', { baseURL: 'http://127.0.0.1:8000' });
+      const response = await apiClient.post('/register', { name, email, password, password_confirmation });
+      const { access_token, user } = response.data;
+      setUser(user);
+      setToken(access_token);
+      localStorage.setItem('USER', JSON.stringify(user));
+      localStorage.setItem('TOKEN', access_token);
+    } catch (error) {
+      if (error.response && error.response.status === 422) {
+        setErrors(error.response.data.errors);
+      }
+      // We re-throw the error so the component knows the request failed.
+      throw error;
+    }
   };
 
   const logout = async () => {
@@ -36,7 +46,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout }}>
+    <AuthContext.Provider value={{ user, setUser, token, errors, setErrors, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

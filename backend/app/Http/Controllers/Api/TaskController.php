@@ -7,13 +7,9 @@ use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    public function index(Request $request, \App\Models\Project $project)
+    public function index(Request $request)
     {
-        if ($request->user()->id !== $project->user_id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        return $project->tasks;
+        return $request->user()->tasks()->with('project')->get();
     }
 
     public function store(Request $request, \App\Models\Project $project)

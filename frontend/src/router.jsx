@@ -4,6 +4,8 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailsPage from './pages/ProjectDetailsPage';
+import TasksPage from './pages/TasksPage';
+import SettingsPage from './pages/SettingsPage';
 import GuestLayout from './components/GuestLayout';
 import DashboardLayout from './components/DashboardLayout';
 
@@ -23,6 +25,14 @@ const router = createBrowserRouter([
       {
         path: '/projects/:id',
         element: <ProjectDetailsPage />,
+      },
+      {
+        path: '/tasks',
+        element: <TasksPage />,
+      },
+      {
+        path: '/settings',
+        element: <SettingsPage />,
       },
     ],
   },
