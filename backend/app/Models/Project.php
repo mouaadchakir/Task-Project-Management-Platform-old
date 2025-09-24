@@ -23,6 +23,11 @@ class Project extends Model
 
     public function tasks()
     {
-        return $this->hasMany(\App\Models\Task::class);
+        return $this->hasMany(Task::class);
+    }
+
+    public function members()
+    {
+        return $this->belongsToMany(User::class, 'project_user');
     }
 }

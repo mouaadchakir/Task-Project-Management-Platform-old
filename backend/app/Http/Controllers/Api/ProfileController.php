@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
@@ -53,5 +54,17 @@ class ProfileController extends Controller
         $user->update(['profile_picture_path' => $path]);
 
         return response()->json(['message' => 'Profile picture updated successfully.', 'path' => $path]);
+    }
+
+    public function removeProfilePicture(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->profile_picture_path) {
+            Storage::disk('public')->delete($user->profile_picture_path);
+            $user->update(['profile_picture_path' => null]);
+        }
+
+        return response()->json(['message' => 'Profile picture removed successfully.']);
     }
 }

@@ -48,13 +48,35 @@ class User extends Authenticatable
         ];
     }
 
-    public function projects()
+    /**
+     * The projects that the user owns.
+     */
+    public function ownedProjects()
     {
-        return $this->hasMany(\App\Models\Project::class);
+        return $this->hasMany(Project::class, 'user_id');
     }
 
+    /**
+     * The projects that the user is a member of.
+     */
+    public function memberOfProjects()
+    {
+        return $this->belongsToMany(Project::class, 'project_user', 'user_id', 'project_id');
+    }
+
+    /**
+     * The tasks assigned to the user.
+     */
     public function tasks()
     {
-        return $this->hasManyThrough(\App\Models\Task::class, \App\Models\Project::class);
+        return $this->hasMany(Task::class, 'assignee_id');
     }
-}
+
+    /**
+     * Get all of the tasks for the user across all of their owned projects.
+     */
+    public function allTasksInOwnedProjects()
+    {
+        return $this->hasManyThrough(Task::class, Project::class, 'user_id', 'project_id', 'id', 'id');
+    }
+

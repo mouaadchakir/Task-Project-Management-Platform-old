@@ -18,10 +18,12 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::apiResource('/projects', ProjectController::class);
-    Route::get('/tasks', [TaskController::class, 'index']);
-    Route::apiResource('/projects.tasks', TaskController::class)->scoped(['task' => 'id']);
+    Route::post('/projects/{project}/invite', [ProjectController::class, 'inviteMember']);
+    Route::get('/tasks', [TaskController::class, 'allUserTasks']);
+    Route::apiResource('projects/{project}/tasks', TaskController::class)->scoped();
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::put('/user/password', [ProfileController::class, 'updatePassword']);
     Route::put('/user/profile', [ProfileController::class, 'updateProfile']);
     Route::post('/user/profile-picture', [ProfileController::class, 'updateProfilePicture']);
+    Route::delete('/user/profile-picture', [ProfileController::class, 'removeProfilePicture']);
 });

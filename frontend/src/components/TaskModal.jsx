@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 
-export default function TaskModal({ isOpen, onClose, onSubmit, task }) {
+export default function TaskModal({ isOpen, onClose, onSubmit, task, projectMembers = [], defaultStatus = 'todo' }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('medium');
   const [status, setStatus] = useState('todo');
   const [deadline, setDeadline] = useState('');
+  const [assigneeId, setAssigneeId] = useState('');
 
   useEffect(() => {
     if (task) {
@@ -14,18 +15,26 @@ export default function TaskModal({ isOpen, onClose, onSubmit, task }) {
       setPriority(task.priority || 'medium');
       setStatus(task.status || 'todo');
       setDeadline(task.deadline || '');
+      setAssigneeId(task.assignee_id || '');
     } else {
       setTitle('');
       setDescription('');
       setPriority('medium');
-      setStatus('todo');
+      setStatus(defaultStatus);
       setDeadline('');
+      setAssigneeId('');
     }
-  }, [task]);
+  }, [task, defaultStatus]);
+
+  useEffect(() => {
+    if (!task && projectMembers.length > 0) {
+      // Optionally default to the first member or leave unassigned
+    }
+  }, [task, projectMembers]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ title, description, priority, status, deadline });
+    onSubmit({ title, description, priority, status, deadline, assignee_id: assigneeId });
   };
 
   if (!isOpen) {
@@ -98,6 +107,24 @@ export default function TaskModal({ isOpen, onClose, onSubmit, task }) {
                 <option value="done">Done</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="assignee_id" className="text-sm font-medium text-gray-700">
+              Assign to
+            </label>
+            <select
+              id="assignee_id"
+              name="assignee_id"
+              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              value={assigneeId}
+              onChange={(e) => setAssigneeId(e.target.value)}
+            >
+              <option value="">Unassigned</option>
+              {projectMembers.map(member => (
+                <option key={member.id} value={member.id}>{member.name}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label htmlFor="deadline" className="text-sm font-medium text-gray-700">

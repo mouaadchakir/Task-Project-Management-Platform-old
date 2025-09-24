@@ -11,12 +11,12 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        $totalProjects = $user->projects()->count();
+        $totalProjects = $user->ownedProjects()->count();
 
         // Get task counts by status for the charts
-        $tasksTodo = $user->tasks()->where('status', 'todo')->count();
-        $tasksInProgress = $user->tasks()->where('status', 'in-progress')->count();
-        $tasksDone = $user->tasks()->where('status', 'done')->count();
+        $tasksTodo = $user->allTasksInOwnedProjects()->where('status', 'todo')->count();
+        $tasksInProgress = $user->allTasksInOwnedProjects()->where('status', 'in-progress')->count();
+        $tasksDone = $user->allTasksInOwnedProjects()->where('status', 'done')->count();
 
         return response()->json([
             'total_projects' => $totalProjects,
