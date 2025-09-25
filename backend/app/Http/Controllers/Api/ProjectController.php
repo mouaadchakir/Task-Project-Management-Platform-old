@@ -14,9 +14,12 @@ class ProjectController extends Controller
         $user = $request->user();
 
         $ownedProjects = $user->ownedProjects()->with('members')->latest()->get();
-        
-        // We get all projects the user is a member of, then filter out the ones they own.
-        $sharedProjects = $user->memberOfProjects()->with('members')->where('user_id', '!=', $user->id)->latest()->get();
+        $memberOfProjects = $user->memberOfProjects()->with('members')->latest()->get();
+
+        // Filter out owned projects from the list of projects the user is a member of
+        $sharedProjects = $memberOfProjects->reject(function ($project) use ($ownedProjects) {
+            return $ownedProjects->contains('id', $project->id);
+        });
 
         return response()->json([
             'owned' => $ownedProjects,
@@ -32,11 +35,10 @@ class ProjectController extends Controller
             'deadline' => 'required|date',
         ]);
 
-        $validatedData['user_id'] = $request->user()->id;
-        $project = Project::create($validatedData);
+        $project = $request->user()->ownedProjects()->create($validatedData);
 
         // Automatically add the owner as a member of the project
-        // $project->members()->attach($request->user()->id);
+        $project->members()->attach($request->user()->id);
 
         return response()->json($project, 201);
     }

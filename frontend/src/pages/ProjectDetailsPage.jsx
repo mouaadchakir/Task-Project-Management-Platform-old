@@ -162,59 +162,83 @@ export default function ProjectDetailsPage() {
     }
   };
 
+  const openEditModal = (task) => {
+    setSelectedTask(task);
+    setSelectedStatus(task.status);
+    setIsModalOpen(true);
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (!project) return <div>Project not found.</div>;
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">{project.title}</h1>
-          <p className="mt-2 text-lg text-gray-600">{project.description}</p>
-          <div className="mt-4 flex items-center space-x-2">
-            <h3 className="text-sm font-medium text-gray-500">Members:</h3>
-            <div className="flex -space-x-2 overflow-hidden">
-              {project.members && project.members.map(member => (
-                <img key={member.id} className="inline-block h-8 w-8 rounded-full ring-2 ring-white" src={member.profile_picture_path ? `http://127.0.0.1:8000/storage/${member.profile_picture_path}` : `https://ui-avatars.com/api/?name=${member.name}&background=random`} alt={member.name} />
-              ))}
-            </div>
-          </div>
-        </div>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-4xl font-bold text-gray-800">{project.title}</h1>
         <button
           onClick={() => { setSelectedTask(null); setIsModalOpen(true); setSelectedStatus('todo'); }}
-          className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="px-6 py-2 font-semibold text-white bg-indigo-600 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-300"
         >
           New Task
         </button>
       </div>
 
-      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div className="mt-8">
-          <form onSubmit={handleInviteMember} className="flex items-center space-x-2">
-            <input type="email" name="email" required placeholder="Invite user by email" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
-            <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-gray-600 border border-transparent rounded-md shadow-sm hover:bg-gray-700">Invite</button>
+      {/* Project Info & Members */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-2xl font-semibold text-gray-700 mb-3">About the project</h2>
+          <p className="text-gray-600">{project.description}</p>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-2xl font-semibold text-gray-700 mb-4">Members</h2>
+          <div className="flex items-center mb-4">
+            <div className="flex -space-x-3 overflow-hidden">
+              {project.members && project.members.map(member => (
+                <img key={member.id} className="inline-block h-10 w-10 rounded-full ring-2 ring-white" src={member.profile_picture_path ? `http://127.0.0.1:8000/storage/${member.profile_picture_path}` : `https://ui-avatars.com/api/?name=${member.name}&background=random`} alt={member.name} title={member.name} />
+              ))}
+            </div>
+          </div>
+          <form onSubmit={handleInviteMember}>
+            <div className="flex items-center space-x-2">
+              <input type="email" name="email" required placeholder="Invite by email" className="flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
+              <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-gray-800 border border-transparent rounded-md shadow-sm hover:bg-gray-900">Invite</button>
+            </div>
           </form>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+      {/* Kanban Board */}
+      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {Object.values(columns).map((column) => (
-            <div key={column.id} className="p-4 rounded-lg bg-gray-100">
-              <h2 className="text-lg font-semibold mb-4">{column.name}</h2>
+            <div key={column.id} className="p-4 rounded-lg bg-white shadow-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-700">{column.name}</h2>
+                <span className="text-sm font-semibold text-gray-500 bg-gray-200 px-2 py-1 rounded-full">{column.items.length}</span>
+              </div>
               <SortableContext items={column.items.map(item => item.id)}>
-                {column.items.map(task => (
-                  <SortableTask key={task.id} task={task} onEdit={(taskToEdit) => { setSelectedTask(taskToEdit); setIsModalOpen(true); }} onDelete={handleDeleteTask} />
-                ))}
+                <div className="min-h-[200px]">
+                  {column.items.map(task => (
+                    <SortableTask key={task.id} task={task} onEdit={openEditModal} onDelete={handleDeleteTask} />
+                  ))}
+                </div>
               </SortableContext>
             </div>
           ))}
         </div>
       </DndContext>
 
-      <TaskModal
-        isOpen={isModalOpen}
-        onClose={() => { setIsModalOpen(false); setSelectedTask(null); }}
-        onSubmit={selectedTask ? handleUpdateTask : handleCreateTask}
-        task={selectedTask}
-        projectMembers={project.members || []}
-        defaultStatus={selectedStatus}
-      />
+      {isModalOpen && (
+        <TaskModal
+          isOpen={isModalOpen}
+          onClose={() => { setIsModalOpen(false); setSelectedTask(null); }}
+          onSubmit={selectedTask ? handleUpdateTask : handleCreateTask}
+          task={selectedTask}
+          projectMembers={project.members || []}
+          status={selectedStatus}
+        />
+      )}
     </div>
   );
 }

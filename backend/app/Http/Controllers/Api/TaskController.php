@@ -9,7 +9,19 @@ class TaskController extends Controller
 {
     public function allUserTasks(Request $request)
     {
-        return $request->user()->tasks()->with('project')->latest()->get();
+        $user = $request->user();
+
+        // Get tasks from projects the user owns
+        $ownedProjectsTasks = $user->allTasksInOwnedProjects()->with('project', 'assignee')->get();
+
+        // Get tasks from projects the user is a member of
+        $memberOfProjectsTasks = collect();
+        $user->memberOfProjects->each(function ($project) use (&$memberOfProjectsTasks) {
+            $memberOfProjectsTasks = $memberOfProjectsTasks->merge($project->tasks()->with('project', 'assignee')->get());
+        });
+
+        // Merge and return unique tasks
+        return $ownedProjectsTasks->merge($memberOfProjectsTasks)->unique('id')->values();
     }
 
     public function index(Request $request, \App\Models\Project $project)
