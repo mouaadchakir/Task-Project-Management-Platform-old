@@ -86,16 +86,32 @@ class ProjectController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $request->validate(['email' => 'required|email|exists:users,email']);
+        $validatedData = $request->validate([
+            'email' => 'required|email',
+        ]);
 
-        $userToInvite = User::where('email', $request->email)->first();
+        $userToInvite = User::where('email', $validatedData['email'])->first();
 
-        if ($project->members->contains($userToInvite)) {
+        if (!$userToInvite) {
+            return response()->json(['message' => 'User not found.'], 404);
+        }
+
+        if ($project->members->contains($userToInvite) || $project->user_id === $userToInvite->id) {
             return response()->json(['message' => 'User is already a member of this project.'], 422);
         }
 
-        $project->members()->attach($userToInvite->id);
+        // Use updateOrCreate to avoid duplicate invitations.
+        // This will create a new invitation if one doesn't exist for this email,
+        // or it will update an existing one (e.g., re-sending a declined invitation).
+        $invitation = $project->invitations()->updateOrCreate(
+            ['email' => $validatedData['email']], // Attributes to find the record
+            ['status' => 'pending']              // Values to update or create with
+        );
 
-        return response()->json(['message' => 'User invited successfully.', 'user' => $userToInvite]);
+        return response()->json([
+            'message' => 'Invitation sent successfully.',
+            'invitation' => $invitation,
+            'user' => $userToInvite
+        ]);
     }
 }

@@ -19,7 +19,16 @@ export default function DashboardLayout() {
       {/* Sidebar */}
       <div className="hidden md:flex flex-col w-72 bg-gray-800">
         <div className="flex items-center justify-center h-16 bg-gray-900">
-          <span className="text-white font-bold uppercase">TaskFlow Pro</span>
+          <div className="flex items-center space-x-2">
+            {/* 1. Go to heroicons.com and find an icon you like */}
+            {/* 2. Copy the SVG code */}
+            {/* 3. Paste the SVG code here */}
+            {/* 4. IMPORTANT: Add className="w-8 h-8 text-white" to the <svg> tag */}
+            <svg className="w-8 h-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-white text-2xl font-bold">TaskFlow Pro</span>
+          </div>
         </div>
         <div className="flex flex-col flex-1 overflow-y-auto">
           <nav className="flex-1 px-2 py-4 bg-gray-800">
@@ -47,7 +56,7 @@ export default function DashboardLayout() {
 
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-y-auto">
-        <div className="flex items-center justify-between h-20 bg-white border-b border-gray-200">
+        <div className="flex items-center justify-between h-16 bg-white border-b border-gray-200">
           <div className="flex items-center px-4">
             <button className="text-gray-500 focus:outline-none focus:text-gray-700">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

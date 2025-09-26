@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\InvitationController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -26,4 +27,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/profile', [ProfileController::class, 'updateProfile']);
     Route::post('/user/profile-picture', [ProfileController::class, 'updateProfilePicture']);
     Route::delete('/user/profile-picture', [ProfileController::class, 'removeProfilePicture']);
+
+    // Invitations
+    Route::get('/invitations', [InvitationController::class, 'index']);
+    Route::post('/invitations/{invitation}/accept', [InvitationController::class, 'accept']);
+    Route::post('/invitations/{invitation}/decline', [InvitationController::class, 'decline']);
 });

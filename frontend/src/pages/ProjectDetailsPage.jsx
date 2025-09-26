@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { useParams } from 'react-router-dom';
 import apiClient from '../services/api';
 import TaskModal from '../components/TaskModal';
@@ -12,7 +13,7 @@ const initialColumns = {
   'done': { id: 'done', name: 'Done', items: [] },
 };
 
-function SortableTask({ task, onEdit, onDelete }) {
+function SortableTask({ task, onEdit, onDelete, currentUser, projectOwnerId }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: task.id });
 
   const style = {
@@ -38,7 +39,9 @@ function SortableTask({ task, onEdit, onDelete }) {
 
         <div className="flex items-center space-x-2">
           <button onClick={() => onEdit(task)} className="text-sm text-indigo-600 hover:text-indigo-900">Edit</button>
-          <button onClick={() => onDelete(task.id)} className="text-sm text-red-600 hover:text-red-900">Delete</button>
+          {currentUser && currentUser.id === projectOwnerId && (
+            <button onClick={() => onDelete(task.id)} className="text-sm text-red-600 hover:text-red-900">Delete</button>
+          )}
         </div>
       </div>
     </div>
@@ -46,6 +49,7 @@ function SortableTask({ task, onEdit, onDelete }) {
 }
 
 export default function ProjectDetailsPage() {
+  const { user } = useAuth();
   const { id } = useParams();
   const [project, setProject] = useState(null);
   const [columns, setColumns] = useState(initialColumns);
@@ -154,7 +158,7 @@ export default function ProjectDetailsPage() {
     const email = e.target.elements.email.value;
     try {
       const response = await apiClient.post(`/projects/${id}/invite`, { email });
-      setProject(prev => ({ ...prev, members: [...prev.members, response.data.user] }));
+      alert('Invitation sent successfully!');
       e.target.reset();
     } catch (error) {
       console.error('Failed to invite member:', error);
@@ -176,12 +180,14 @@ export default function ProjectDetailsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-4xl font-bold text-gray-800">{project.title}</h1>
-        <button
-          onClick={() => { setSelectedTask(null); setIsModalOpen(true); setSelectedStatus('todo'); }}
-          className="px-6 py-2 font-semibold text-white bg-indigo-600 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-300"
-        >
-          New Task
-        </button>
+        {user && project && user.id === project.user_id && (
+          <button
+            onClick={() => { setSelectedTask(null); setIsModalOpen(true); setSelectedStatus('todo'); }}
+            className="px-6 py-2 font-semibold text-white bg-indigo-600 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-300"
+          >
+            New Task
+          </button>
+        )}
       </div>
 
       {/* Project Info & Members */}
@@ -199,12 +205,14 @@ export default function ProjectDetailsPage() {
               ))}
             </div>
           </div>
-          <form onSubmit={handleInviteMember}>
-            <div className="flex items-center space-x-2">
-              <input type="email" name="email" required placeholder="Invite by email" className="flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
-              <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-gray-800 border border-transparent rounded-md shadow-sm hover:bg-gray-900">Invite</button>
-            </div>
-          </form>
+          {user && project && user.id === project.user_id && (
+            <form onSubmit={handleInviteMember}>
+              <div className="flex items-center space-x-2">
+                <input type="email" name="email" required placeholder="Invite by email" className="flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
+                <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-gray-800 border border-transparent rounded-md shadow-sm hover:bg-gray-900">Invite</button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
 
@@ -220,7 +228,7 @@ export default function ProjectDetailsPage() {
               <SortableContext items={column.items.map(item => item.id)}>
                 <div className="min-h-[200px]">
                   {column.items.map(task => (
-                    <SortableTask key={task.id} task={task} onEdit={openEditModal} onDelete={handleDeleteTask} />
+                    <SortableTask key={task.id} task={task} onEdit={openEditModal} onDelete={handleDeleteTask} currentUser={user} projectOwnerId={project.user_id} />
                   ))}
                 </div>
               </SortableContext>

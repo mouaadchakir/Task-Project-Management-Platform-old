@@ -50,12 +50,12 @@ class TaskController extends Controller
 
         $task = $project->tasks()->create($validatedData);
 
-        return response()->json($task, 201);
+        return response()->json($task->load('assignee'), 201);
     }
 
     public function show(Request $request, \App\Models\Project $project, \App\Models\Task $task)
     {
-        if ($request->user()->id !== $task->project->user_id) {
+        if ($request->user()->id !== $task->project->user_id && !$task->project->members->contains($request->user())) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -64,7 +64,7 @@ class TaskController extends Controller
 
     public function update(Request $request, \App\Models\Project $project, \App\Models\Task $task)
     {
-        if ($request->user()->id !== $task->project->user_id) {
+        if ($request->user()->id !== $task->project->user_id && !$task->project->members->contains($request->user())) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -79,11 +79,11 @@ class TaskController extends Controller
 
         $task->update($validatedData);
 
-        return response()->json($task);
+        return response()->json($task->load('assignee'));
     }
 
     public function destroy(Request $request, \App\Models\Project $project, \App\Models\Task $task)
-    {
+    {   
         if ($request->user()->id !== $task->project->user_id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../services/api';
 import ProjectModal from '../components/ProjectModal';
+import Spinner from '../components/Spinner';
 
 const ProjectCard = ({ project }) => (
   <Link to={`/projects/${project.id}`} className="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
@@ -50,8 +51,8 @@ export default function ProjectsPage() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
-  }
+      return <Spinner />;
+    }
 
   return (
     <div>

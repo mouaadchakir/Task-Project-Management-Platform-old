@@ -15,7 +15,7 @@ export default function TaskModal({ isOpen, onClose, onSubmit, task, projectMemb
       setPriority(task.priority || 'medium');
       setStatus(task.status || 'todo');
       setDeadline(task.deadline || '');
-      setAssigneeId(task.assignee_id || '');
+      setAssigneeId(task.assignee ? task.assignee.id : '');
     } else {
       setTitle('');
       setDescription('');

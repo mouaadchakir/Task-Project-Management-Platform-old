@@ -30,4 +30,9 @@ class Project extends Model
     {
         return $this->belongsToMany(User::class, 'project_user');
     }
+
+    public function invitations()
+    {
+        return $this->hasMany(ProjectInvitation::class);
+    }
 }
