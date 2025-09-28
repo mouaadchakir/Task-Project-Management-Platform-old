@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Notification;
 
 class TaskController extends Controller
 {
@@ -50,6 +51,15 @@ class TaskController extends Controller
 
         $task = $project->tasks()->create($validatedData);
 
+        // Notify the assignee if there is one
+        if ($task->assignee_id) {
+            Notification::create([
+                'user_id' => $task->assignee_id,
+                'message' => "You have been assigned a new task '{$task->title}' in project '{$project->title}'.",
+                'link' => "/projects/{$project->id}"
+            ]);
+        }
+
         return response()->json($task->load('assignee'), 201);
     }
 
@@ -78,6 +88,15 @@ class TaskController extends Controller
         ]);
 
         $task->update($validatedData);
+
+        // Notify the new assignee if the assignee has changed
+        if ($task->wasChanged('assignee_id') && $task->assignee_id) {
+            Notification::create([
+                'user_id' => $task->assignee_id,
+                'message' => "You have been assigned to the task '{$task->title}' in project '{$project->title}'.",
+                'link' => "/projects/{$project->id}"
+            ]);
+        }
 
         return response()->json($task->load('assignee'));
     }

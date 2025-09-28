@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\User;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 
 class ProjectController extends Controller
@@ -108,10 +109,35 @@ class ProjectController extends Controller
             ['status' => 'pending']              // Values to update or create with
         );
 
+        // Create a notification for the invited user
+        Notification::create([
+            'user_id' => $userToInvite->id,
+            'message' => "You have been invited to join the project '{$project->title}'.",
+            'link' => "/projects/{$project->id}"
+        ]);
+
         return response()->json([
             'message' => 'Invitation sent successfully.',
             'invitation' => $invitation,
             'user' => $userToInvite
         ]);
+    }
+
+    public function removeMember(Request $request, Project $project, User $user)
+    {
+        // Authorization: Only the project owner can remove members.
+        if ($request->user()->id !== $project->user_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // A user cannot be removed if they are the project owner.
+        if ($user->id === $project->user_id) {
+            return response()->json(['message' => 'The project owner cannot be removed.'], 422);
+        }
+
+        // Detach the member from the project.
+        $project->members()->detach($user->id);
+
+        return response()->json(['message' => 'Member removed successfully.'], 200);
     }
 }

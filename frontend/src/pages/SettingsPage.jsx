@@ -11,7 +11,7 @@ const Spinner = () => (
 );
 
 export default function SettingsPage() {
-  const { user, setUser } = useAuth();
+  const { user, setUser, logout } = useAuth();
   const [profileData, setProfileData] = useState({ name: '', email: '' });
   const [passwordData, setPasswordData] = useState({ current_password: '', password: '', password_confirmation: '' });
   const [profileMessage, setProfileMessage] = useState({ type: '', content: '' });
@@ -20,6 +20,10 @@ export default function SettingsPage() {
   const [passwordErrors, setPasswordErrors] = useState(null);
   const [isProfileSaving, setIsProfileSaving] = useState(false);
   const [isPasswordSaving, setIsPasswordSaving] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [isDangerZoneVisible, setIsDangerZoneVisible] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -99,6 +103,25 @@ export default function SettingsPage() {
       localStorage.setItem('USER', JSON.stringify(updatedUser));
     } catch (error) {
       setProfileMessage({ type: 'error', content: 'Failed to remove picture. Please try again.' });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteError('');
+    try {
+      await apiClient.delete('/profile', {
+        data: { password: deletePassword },
+      });
+      setUser(null);
+      localStorage.removeItem('USER');
+      localStorage.removeItem('TOKEN');
+      window.location.href = '/login';
+    } catch (error) {
+      if (error.response?.status === 422) {
+        setDeleteError(error.response.data.message);
+      } else {
+        setDeleteError('An unexpected error occurred. Please try again.');
+      }
     }
   };
 
@@ -184,6 +207,46 @@ export default function SettingsPage() {
           </form>
         </div>
       </div>
+
+      {/* Danger Zone */}
+      <div className="mt-8 p-6 bg-red-50 rounded-lg shadow-md">
+        <div onClick={() => setIsDangerZoneVisible(!isDangerZoneVisible)} className="cursor-pointer flex items-center justify-between">
+          <h2 className="text-xl font-medium text-red-800">Danger Zone</h2>
+          <svg className={`w-6 h-6 text-red-800 transform transition-transform ${isDangerZoneVisible ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+        {isDangerZoneVisible && (
+          <div className="mt-4 border-t border-red-200 pt-4 flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-gray-800">Delete your account</p>
+              <p className="text-sm text-gray-600">Once you delete your account, there is no going back. Please be certain.</p>
+            </div>
+            <button onClick={() => setIsDeleteModalOpen(true)} className="px-4 py-2 font-semibold text-white bg-red-600 rounded-md hover:bg-red-700">
+              Delete Account
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Delete Account Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md">
+            <h2 className="text-2xl font-bold text-gray-900">Confirm Account Deletion</h2>
+            <p className="mt-4 text-gray-600">This action is irreversible. To confirm, please enter your password.</p>
+            <div className="mt-6">
+              <label htmlFor="delete_password" className="block text-sm font-medium text-gray-700">Password</label>
+              <Input type="password" name="delete_password" id="delete_password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} required className="mt-1" />
+              {deleteError && <p className="mt-2 text-sm text-red-600">{deleteError}</p>}
+            </div>
+            <div className="mt-8 flex justify-end space-x-4">
+              <button onClick={() => { setIsDeleteModalOpen(false); setDeleteError(''); setDeletePassword(''); }} className="px-4 py-2 font-semibold text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
+              <button onClick={handleDeleteAccount} className="px-4 py-2 font-semibold text-white bg-red-600 rounded-md hover:bg-red-700">Delete Account</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

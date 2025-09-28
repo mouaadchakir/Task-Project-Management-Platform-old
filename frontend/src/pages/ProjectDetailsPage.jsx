@@ -6,6 +6,8 @@ import TaskModal from '../components/TaskModal';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import Spinner from '../components/Spinner';
+
 
 const initialColumns = {
   'todo': { id: 'todo', name: 'To Do', items: [] },
@@ -150,19 +152,35 @@ export default function ProjectDetailsPage() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (!project) return <div>Project not found.</div>;
-
+  
+     if (loading) {
+        return <Spinner />;
+      }
   const handleInviteMember = async (e) => {
     e.preventDefault();
     const email = e.target.elements.email.value;
     try {
-      const response = await apiClient.post(`/projects/${id}/invite`, { email });
+      await apiClient.post(`/projects/${id}/invite`, { email });
       alert('Invitation sent successfully!');
       e.target.reset();
     } catch (error) {
       console.error('Failed to invite member:', error);
       alert(error.response?.data?.message || 'Failed to invite member.');
+    }
+  };
+
+  const handleRemoveMember = async (memberId) => {
+    if (window.confirm('Are you sure you want to remove this member?')) {
+      try {
+        await apiClient.delete(`/projects/${id}/members/${memberId}`);
+        setProject(prev => ({
+          ...prev,
+          members: prev.members.filter(member => member.id !== memberId)
+        }));
+      } catch (error) {
+        console.error('Failed to remove member:', error);
+        alert(error.response?.data?.message || 'Failed to remove member.');
+      }
     }
   };
 
@@ -198,12 +216,26 @@ export default function ProjectDetailsPage() {
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-semibold text-gray-700 mb-4">Members</h2>
-          <div className="flex items-center mb-4">
-            <div className="flex -space-x-3 overflow-hidden">
-              {project.members && project.members.map(member => (
-                <img key={member.id} className="inline-block h-10 w-10 rounded-full ring-2 ring-white" src={member.profile_picture_path ? `http://127.0.0.1:8000/storage/${member.profile_picture_path}` : `https://ui-avatars.com/api/?name=${member.name}&background=random`} alt={member.name} title={member.name} />
-              ))}
-            </div>
+          <div className="space-y-4">
+            {project.members.map(member => (
+              <div key={member.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
+                <div className="flex items-center space-x-3">
+                  <img className="h-10 w-10 rounded-full" src={member.profile_picture_path ? `http://127.0.0.1:8000/storage/${member.profile_picture_path}` : `https://ui-avatars.com/api/?name=${member.name}&background=random`} alt={member.name} />
+                  <div className="flex-grow min-w-0">
+                    <div className="flex items-center space-x-2">
+                      <p className="font-semibold text-gray-800 truncate">{member.name}</p>
+                      {project.user_id === member.id && (
+                        <span className="px-2 py-0.5 text-xs font-semibold text-indigo-800 bg-indigo-100 rounded-full">Admin</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500 truncate">{member.email}</p>
+                  </div>
+                </div>
+                {user && user.id === project.user_id && user.id !== member.id && (
+                  <button onClick={() => handleRemoveMember(member.id)} className="px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full hover:bg-red-200">Remove</button>
+                )}
+              </div>
+            ))}
           </div>
           {user && project && user.id === project.user_id && (
             <form onSubmit={handleInviteMember}>

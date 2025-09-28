@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Navigate, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Notifications from './Notifications';
 
 export default function DashboardLayout() {
   const { user, token, logout } = useAuth();
@@ -64,7 +65,8 @@ export default function DashboardLayout() {
               </svg>
             </button>
           </div>
-          <div className="flex items-center pr-4">
+          <div className="flex items-center pr-4 space-x-4">
+            <Notifications />
             <div className="relative">
               <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
                 <span className="mr-2">{user?.name}</span>
